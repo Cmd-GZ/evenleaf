@@ -77,31 +77,28 @@
 
 \begin{figure}[htbp]
 \centering
-\begin{tikzpicture}[scale=1.0, font=\scriptsize]
-  \useasboundingbox (-0.2,-2.0) rectangle (11.4,2.4);
-  % 左：删减本
-  \node[anchor=west] at (0,2.0) {删减本};
-  \draw[line width=0.6pt] (0,1.6) rectangle (3.6,-1.6);
-  \node[anchor=west] at (0.2,0.95) {三百六十条};
-  \node[anchor=west] at (0.2,0.25) {无岁差};
-  \node[anchor=west] at (0.2,-0.45) {无交食};
-  \node[anchor=west] at (0.2,-1.15) {无五星逆行};
-  % 箭头
-  \draw[line width=0.6pt, ->] (3.7,0) -- (5.6,0);
-  \node[anchor=south, align=center] at (4.65,0.1) {五年观测\\补回三术};
-  % 右：还原本
-  \node[anchor=west] at (5.7,2.0) {还原本};
-  \draw[line width=0.6pt] (5.7,1.6) rectangle (9.5,-1.6);
-  \node[anchor=west] at (5.9,0.95) {三百六十条};
-  \node[anchor=west] at (5.9,0.25) {三术俱全};
-  \node[anchor=west] at (5.9,-0.45) {与删减前同};
-  \node[anchor=west] at (5.9,-1.15) {底层算得出了};
-  % 出：密葬法
-  \draw[line width=0.6pt, ->] (9.6,0) -- (10.5,0);
-  \node[anchor=west] at (10.6,0) {密葬法};
+\begin{tikzpicture}[scale=1.0]
+  \begin{axis}[
+    width=12.4cm, height=6.2cm,
+    xlabel={送历之后第几年}, ylabel={与实测之差（日）},
+    xmin=0, xmax=200, ymin=0, ymax=6,
+    axis lines=left, tick align=outside,
+    xtick={0,50,100,150,200},
+    ytick={0,2,4,6},
+    every axis label/.style={font=\footnotesize},
+    tick label style={font=\scriptsize},
+    grid=major, grid style=black!12, line width=0.2pt,
+    ]
+    \addplot[line width=0.9pt, domain=0:200, samples=80]
+      {0.029*x};
+    \addplot[line width=0.6pt, dashed, domain=0:200, samples=80]
+      {0.02*abs(sin(deg(x*0.16)))};
+    \node[font=\scriptsize, anchor=north west] at (axis cs:6,5.6) {删三术的历};
+    \node[font=\scriptsize, anchor=north west] at (axis cs:6,1.0) {三术俱全的历};
+  \end{axis}
 \end{tikzpicture}
-\caption{删减本与还原本。删掉的三术补回之后，本来算不出东西的那一层也活了；它不是后加的，原本就在历里；历不全的时候，它算不出东西。}
-\figsource{示意。左栏据第三枚，右栏据第二十七枚背面；「密葬法」一名出自月面档案，见本章末。}
+\caption{同一部历在两百年间的偏移。删去岁差的历，冬至点每年差一点，两百年累积约六日；三术俱全的历围着实测线来回，不累积。}
+\figsource{示意。斜率由岁差每七十二年差一度折算；交点与节气的位置有关，此处按平均节气计。}
 \end{figure}
 
 补完之后，他把这部历叫「新历」。在他看来，这就是一部修好了的历。
