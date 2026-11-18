@@ -22,71 +22,98 @@ concurrency:
   group: render-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TINYTEX_DIR: ${{ github.workspace }}/.ci/texlive
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: 取仓库
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 装 TeX Live
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            texlive-xetex texlive-lang-chinese texlive-latex-extra \
-            texlive-pictures texlive-fonts-recommended texlive-science \
-            poppler-utils unzip curl
-          xelatex --version | head -1
+      - name: 取缓存（TeX 与字体）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .ci/texlive
+            .ci/fonts
+          key: tex-${{ runner.os }}-${{ hashFiles('.github/workflows/render.yml') }}
 
-      - name: 装字体（拉丁 Noto、CJK Noto、等宽）
+      - name: 装系统小工具（每次都装，很快）
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends poppler-utils
+
+      - name: 装 TinyTeX（只在缓存未命中时）
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p .ci
+          curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
+          mkdir -p "$TINYTEX_DIR"
+          cp -a "$HOME/.TinyTeX/." "$TINYTEX_DIR/"
+          TL="$TINYTEX_DIR/bin/x86_64-linux"
+          "$TL/tlmgr" install \
+            ctex xecjk zhnumber xeCJK fontspec fandol \
+            pgfplots pgf tikz tcolorbox eso-pic etoolbox \
+            booktabs caption footmisc titlesec titletoc tocloft \
+            geometry graphicx hyperref bookmark enumitem multicol multirow \
+            makecell tabularx array amsmath amssymb calc xcolor fancyhdr longtable
+
+      - name: 装字体（只在缓存未命中时）
+        if: steps.cache.outputs.cache-hit != 'true'
         env:
           MONO_FONT_URL: ${{ vars.MONO_FONT_URL }}
         run: |
           set -euo pipefail
-          # 拉丁 Noto（NotoSerif-Regular.ttf 等）与 CJK
-          sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-cjk fonts-noto-cjk-extra
-          # 基座里写死了 Path=/usr/share/fonts/noto/，Ubuntu 装在 truetype/ 下，做个软链
-          if [ ! -d /usr/share/fonts/noto ]; then
-            sudo ln -s /usr/share/fonts/truetype/noto /usr/share/fonts/noto
-          fi
-          ls /usr/share/fonts/noto/NotoSerif-Regular.ttf /usr/share/fonts/noto/NotoSans-Regular.ttf
-
-          # 等宽字体 JetBrains Maple Mono：apt 没有，从发布页取
-          mkdir -p ~/.local/share/fonts
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            fonts-noto-core fonts-noto-cjk fonts-noto-cjk-extra unzip curl
+          mkdir -p .ci/fonts/noto .ci/fonts/mono
+          cp -a /usr/share/fonts/truetype/noto/. .ci/fonts/noto/
+          cp -a /usr/share/fonts/truetype/noto-cjk/. .ci/fonts/noto/ 2>/dev/null || true
           URL="${MONO_FONT_URL:-https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest/download/JetBrainsMapleMono-XX-XX-XX-XX.zip}"
-          echo "取等宽字体：$URL"
-          if curl -fL --retry 3 -o /tmp/mono.zip "$URL"; then
-            unzip -o -q /tmp/mono.zip -d ~/.local/share/fonts/
-          else
-            echo "::error::等宽字体下载失败。请在仓库 Variables 里设 MONO_FONT_URL，指向 JetBrains Maple Mono 的发行包。" >&2
-            exit 1
-          fi
-          fc-cache -f >/dev/null
-          fc-match 'JetBrains Maple Mono'
-          fc-match 'Noto Serif CJK SC'
-          fc-match 'Noto Sans Mono CJK SC'
+          curl -fL --retry 3 -o /tmp/mono.zip "$URL"
+          unzip -o -q /tmp/mono.zip -d .ci/fonts/mono/
 
-      - name: 字体自检
+      - name: 挂上 TeX 与字体
         run: |
           set -euo pipefail
+          # TinyTeX 进 PATH
+          echo "$TINYTEX_DIR/bin/x86_64-linux" >> "$GITHUB_PATH"
+          # 字体装到用户目录
+          mkdir -p "$HOME/.local/share/fonts"
+          cp -a .ci/fonts/noto/. "$HOME/.local/share/fonts/" 2>/dev/null || true
+          cp -a .ci/fonts/mono/. "$HOME/.local/share/fonts/" 2>/dev/null || true
+          # 基座写死 Path=/usr/share/fonts/noto/，这里指过去
+          sudo mkdir -p /usr/share/fonts
+          sudo rm -rf /usr/share/fonts/noto
+          sudo ln -s "$HOME/.local/share/fonts" /usr/share/fonts/noto
+          fc-cache -f >/dev/null
+
+      - name: 自检（字体 + TeX）
+        run: |
+          set -euo pipefail
+          export PATH="$TINYTEX_DIR/bin/x86_64-linux:$PATH"
+          xelatex --version | head -1
           fail=0
           for f in "NotoSerif" "NotoSans" "JetBrains Maple Mono" "Noto Serif CJK SC" "Noto Sans CJK SC" "Noto Sans Mono CJK SC"; do
             got=$(fc-match -f '%{family[0]}' "$f")
             printf '%-26s → %s\n' "$f" "$got"
-            case "$got" in
-              *Noto*|*JetBrains*) ;;
-              *) echo "::error::字体缺失：$f"; fail=1 ;;
-            esac
+            case "$got" in *Noto*|*JetBrains*) ;; *) echo "::error::字体缺失：$f"; fail=1 ;; esac
           done
+          [ -f /usr/share/fonts/noto/NotoSerif-Regular.ttf ] || { echo "::error::/usr/share/fonts/noto/NotoSerif-Regular.ttf 不在"; fail=1; }
+          kpsewhich ctex.sty >/dev/null || { echo "::error::ctex.sty 缺失"; fail=1; }
           exit "$fail"
 
       - name: 编译三本书
         run: |
           set -euo pipefail
+          export PATH="$TINYTEX_DIR/bin/x86_64-linux:$PATH"
           for dir in warthunder guanghan mooncity; do
             echo "==== $dir ===="
             ( cd "books/$dir" && ./build.sh )
@@ -109,7 +136,7 @@ jobs:
           done
           exit "$fail"
 
-      - name: 上传 PDF（审查用）
+      - name: 上传 PDF
         uses: actions/upload-artifact@v4
         with:
           name: pdfs
@@ -126,12 +153,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch --quiet origin "${GITHUB_REF_NAME}"
           head=$(git rev-parse "origin/${GITHUB_REF_NAME}")
-          # 构建期间若又有新提交，这一批 PDF 已经过期，不写回，等下一轮
           if [ "$head" != "$BUILT_SHA" ]; then
             echo "源码已更新（origin ${head:0:7} ≠ 构建 ${BUILT_SHA:0:7}），本轮 PDF 不写回。"
             exit 0
           fi
-          git add -A books/*/*.pdf
+          git add -A -- 'books/*/*.pdf' ':(exclude)books/*/main.pdf'
           if git diff --cached --quiet; then
             echo "PDF 无变化，不提交。"
             exit 0
