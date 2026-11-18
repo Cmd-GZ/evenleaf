@@ -60,9 +60,10 @@ jobs:
           "$ORIG/tlmgr" install \
             xetex ctex xecjk zhnumber fontspec fandol \
             pgfplots pgf tcolorbox environ trimspaces tikzfill pdfcol \
-            eso-pic etoolbox booktabs caption footmisc titlesec tocloft \
-            geometry graphics tools amsmath amsfonts hyperref bookmark \
-            enumitem multirow makecell xcolor fancyhdr
+            eso-pic etoolbox booktabs caption footmisc perpage titlesec titletoc tocloft \
+            geometry graphics tools amsmath amsfonts amssymb hyperref bookmark \
+            enumitem multirow makecell tabularx array calc longtable \
+            xcolor fancyhdr
           # 宏包装好再整树搬进缓存目录；直接在复制出来的树上跑 tlmgr 容易出岔子
           mkdir -p "$CI_TEXDIR"
           cp -a "$HOME/.TinyTeX/." "$CI_TEXDIR/"
