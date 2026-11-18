@@ -29,6 +29,7 @@ build.log
 
 # ---- 本地 TeX 依赖（约 90 MB，由 scripts/setup-tex.sh 复现）---------------
 /texmf/
+/.ci/
 /tlpkg/
 texmf-var/
 texmf-config/

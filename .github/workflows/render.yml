@@ -58,11 +58,11 @@ jobs:
           cp -a "$HOME/.TinyTeX/." "$TINYTEX_DIR/"
           TL="$TINYTEX_DIR/bin/x86_64-linux"
           "$TL/tlmgr" install \
-            ctex xecjk zhnumber xeCJK fontspec fandol \
-            pgfplots pgf tikz tcolorbox eso-pic etoolbox \
-            booktabs caption footmisc titlesec titletoc tocloft \
-            geometry graphicx hyperref bookmark enumitem multicol multirow \
-            makecell tabularx array amsmath amssymb calc xcolor fancyhdr longtable
+            xetex ctex xecjk zhnumber fontspec fandol \
+            pgfplots pgf tcolorbox environ trimspaces tikzfill pdfcol \
+            eso-pic etoolbox booktabs caption footmisc titlesec tocloft \
+            geometry graphics tools amsmath amsfonts hyperref bookmark \
+            enumitem multirow makecell xcolor fancyhdr
 
       - name: 装字体（只在缓存未命中时）
         if: steps.cache.outputs.cache-hit != 'true'
@@ -75,7 +75,7 @@ jobs:
             fonts-noto-core fonts-noto-cjk fonts-noto-cjk-extra unzip curl
           mkdir -p .ci/fonts/noto .ci/fonts/mono
           cp -a /usr/share/fonts/truetype/noto/. .ci/fonts/noto/
-          cp -a /usr/share/fonts/truetype/noto-cjk/. .ci/fonts/noto/ 2>/dev/null || true
+          cp -a /usr/share/fonts/opentype/noto/. .ci/fonts/noto/
           URL="${MONO_FONT_URL:-https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest/download/JetBrainsMapleMono-XX-XX-XX-XX.zip}"
           curl -fL --retry 3 -o /tmp/mono.zip "$URL"
           unzip -o -q /tmp/mono.zip -d .ci/fonts/mono/
@@ -140,7 +140,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pdfs
-          path: books/*/*.pdf
+          path: |
+            books/*/*.pdf
+            !books/*/main.pdf
           if-no-files-found: error
 
       - name: 提交新 PDF
