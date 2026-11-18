@@ -1,10 +1,11 @@
-战争的雷霆——记一种可能的中国历史
-Thunder of War: A Chronological Reconstruction of a Possible Chinese History
+Far Eastern Heretical Sources & Civilizational Origin Reconstruction Series
+https://github.com/Cmd-GZ/thunder-of-war
 
 Copyright (c) 2026 Cmd-GZ <newsupergodg@gmail.com>, bodyatQin
 
-This repository — the LaTeX sources, the compiled PDF, the TikZ figures,
-and the accompanying documentation — is licensed under the
+This repository — including worldbuilding documents, LaTeX source files,
+TikZ figures, compiled PDFs, and accompanying documentation — is licensed
+under the:
 
     Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
     (CC BY-NC-SA 4.0)
@@ -32,22 +33,29 @@ No additional restrictions — You may not apply legal terms or technological
 measures that legally restrict others from doing anything the license
 permits.
 
-Full legal code follows below. Canonical text and translations:
+Suggested attribution:
+
+  "thunder-of-war" (Far Eastern Heretical Sources & Civilizational Origin
+  Reconstruction Series), available at:
+  https://github.com/Cmd-GZ/thunder-of-war
+  Licensed under CC BY-NC-SA 4.0:
+  https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Third-party material notice:
+
+  Excerpts from classical historical texts in the public domain are not
+  restricted by this license. Brief quotations from modern punctuated
+  editions remain subject to the rights of their respective editors and
+  publishers under applicable copyright exceptions. Typefaces used for
+  typesetting (such as the Noto family under the SIL Open Font License 1.1)
+  are governed by their respective licenses and are not bundled with or
+  covered by this license. This license applies only to the original
+  texts, source code, figures, and compiled editions created in this
+  repository.
+
+Canonical legal code:
 
   https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
-  中文参考译本（仅供参考，以英文法律文本为准）:
-  https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode.zh-Hans
-
-Suggested attribution / 建议署名格式：
-
-  “战争的雷霆——记一种可能的中国历史”，Cmd-GZ，CC BY-NC-SA 4.0
-  https://github.com/<your-name>/thunder-of-war
-
-Third-party material / 第三方内容说明：
-
-  书中引用的中国古代文献（《旧唐书》《明史》《资治通鉴》等）属公有领域，
-  不受本许可约束；排版所用字体为 Noto 系列，依 SIL Open Font License 1.1
-  分发，亦不在本许可范围内。本许可仅覆盖本仓库作者创作的文字、代码与图版。
 
 =======================================================================
 
