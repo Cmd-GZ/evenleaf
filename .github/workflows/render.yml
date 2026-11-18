@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TINYTEX_DIR: ${{ github.workspace }}/.ci/texlive
+  CI_TEXDIR: ${{ github.workspace }}/.ci/texlive
 
 jobs:
   build:
@@ -53,16 +53,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .ci
+          # 安装脚本自己读 TINYTEX_DIR（TEXDIR=${TINYTEX_DIR:-~}/.TinyTeX，再 tar -C $(dirname $TEXDIR)），
+          # 变量名不能撞，本项目一律用 CI_TEXDIR
           curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
-          mkdir -p "$TINYTEX_DIR"
-          cp -a "$HOME/.TinyTeX/." "$TINYTEX_DIR/"
-          TL="$TINYTEX_DIR/bin/x86_64-linux"
-          "$TL/tlmgr" install \
+          ORIG="$HOME/.TinyTeX/bin/x86_64-linux"
+          "$ORIG/tlmgr" install \
             xetex ctex xecjk zhnumber fontspec fandol \
             pgfplots pgf tcolorbox environ trimspaces tikzfill pdfcol \
             eso-pic etoolbox booktabs caption footmisc titlesec tocloft \
             geometry graphics tools amsmath amsfonts hyperref bookmark \
             enumitem multirow makecell xcolor fancyhdr
+          # 宏包装好再整树搬进缓存目录；直接在复制出来的树上跑 tlmgr 容易出岔子
+          mkdir -p "$CI_TEXDIR"
+          cp -a "$HOME/.TinyTeX/." "$CI_TEXDIR/"
 
       - name: 装字体（只在缓存未命中时）
         if: steps.cache.outputs.cache-hit != 'true'
@@ -84,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           # TinyTeX 进 PATH
-          echo "$TINYTEX_DIR/bin/x86_64-linux" >> "$GITHUB_PATH"
+          echo "$CI_TEXDIR/bin/x86_64-linux" >> "$GITHUB_PATH"
           # 字体装到用户目录
           mkdir -p "$HOME/.local/share/fonts"
           cp -a .ci/fonts/noto/. "$HOME/.local/share/fonts/" 2>/dev/null || true
@@ -98,7 +101,7 @@ jobs:
       - name: 自检（字体 + TeX）
         run: |
           set -euo pipefail
-          export PATH="$TINYTEX_DIR/bin/x86_64-linux:$PATH"
+          export PATH="$CI_TEXDIR/bin/x86_64-linux:$PATH"
           xelatex --version | head -1
           fail=0
           for f in "NotoSerif" "NotoSans" "JetBrains Maple Mono" "Noto Serif CJK SC" "Noto Sans CJK SC" "Noto Sans Mono CJK SC"; do
@@ -113,7 +116,7 @@ jobs:
       - name: 编译三本书
         run: |
           set -euo pipefail
-          export PATH="$TINYTEX_DIR/bin/x86_64-linux:$PATH"
+          export PATH="$CI_TEXDIR/bin/x86_64-linux:$PATH"
           for dir in warthunder guanghan mooncity; do
             echo "==== $dir ===="
             ( cd "books/$dir" && ./build.sh )
