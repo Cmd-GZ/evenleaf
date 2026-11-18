@@ -57,35 +57,21 @@ jobs:
           # 变量名不能撞，本项目一律用 CI_TEXDIR
           curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
           ORIG="$HOME/.TinyTeX/bin/x86_64-linux"
-          PKGS="xetex ctex xecjk zhnumber fontspec fandol \
-            pgfplots pgf tcolorbox environ trimspaces tikzfill pdfcol \
-            eso-pic etoolbox booktabs caption footmisc perpage titlesec titletoc tocloft \
-            geometry graphics tools amsmath amsfonts amssymb hyperref bookmark \
-            enumitem multirow makecell tabularx array calc longtable \
-            xcolor fancyhdr"
-          # 装宏包：跨版本（本地 TL 比 CTAN 常年旧）时 tlmgr 会拒绝，改用与本地同年份的 historic 源再试
+          # 用集合而不是逐个点名：单个宏包名常常「不在仓库里」——amssymb 在 amsfonts，array/calc/
+          # longtable/tabularx 在 tools，perpage 在 bigfoot，titletoc 在 titlesec 的包里。
+          PKGS="xetex ctex fandol collection-langchinese collection-latexrecommended \
+            collection-latexextra collection-pictures collection-fontsrecommended"
           if ! "$ORIG/tlmgr" install $PKGS > /tmp/tlmgr.log 2>&1; then
-            echo "---- tlmgr 首次失败，摘要 ----"
+            echo "---- tlmgr 失败，摘要 ----"
             grep -E "not present in repository|cannot be found|older than remote|Cross release|^! " /tmp/tlmgr.log | head -10 || true
-            YEAR=$("$ORIG/tex" --version 2>/dev/null | grep -o '[0-9]\{4\}' | head -1 || true)
-            [ -n "${YEAR:-}" ] || YEAR=$("$ORIG/pdflatex" --version 2>/dev/null | grep -o '[0-9]\{4\}' | head -1 || true)
-            [ -n "${YEAR:-}" ] || YEAR=$(date +%Y)
-            echo "本地 TeX Live 版本：${YEAR}"
-            for repo in \
-              "https://ftp.tu-ryde.de/pub/texlive/historic/systems/texlive/${YEAR}/tlnet" \
-              "https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/${YEAR}/tlnet"; do
-              echo "改试 historic 源：$repo"
-              if "$ORIG/tlmgr" option repository "$repo" \
-                 && "$ORIG/tlmgr" install $PKGS > /tmp/tlmgr2.log 2>&1; then
-                echo "historic 源安装成功。"; break
-              fi
-            done
-            if ! "$ORIG/kpsewhich" ctex.sty >/dev/null 2>&1; then
-              echo "---- tlmgr 日志末尾 ----"; tail -30 /tmp/tlmgr.log || true
-              echo "::error::宏包安装失败，见上面的日志"; exit 1
-            fi
+            echo "---- 末尾 20 行 ----"
+            tail -20 /tmp/tlmgr.log || true
+            echo "::error::宏包安装失败"; exit 1
           fi
-          "$ORIG/kpsewhich" ctex.sty perpage.sty
+          for sty in ctex.sty xeCJK.sty pgfplots.sty footmisc.sty perpage.sty titlesec.sty \
+                     booktabs.sty tcolorbox.sty enumitem.sty caption.sty; do
+            "$ORIG/kpsewhich" "$sty" >/dev/null || { echo "::error::缺 $sty"; exit 1; }
+          done
           mkdir -p "$CI_TEXDIR"
           cp -a "$HOME/.TinyTeX/." "$CI_TEXDIR/"
 
