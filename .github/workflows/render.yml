@@ -57,14 +57,35 @@ jobs:
           # 变量名不能撞，本项目一律用 CI_TEXDIR
           curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
           ORIG="$HOME/.TinyTeX/bin/x86_64-linux"
-          "$ORIG/tlmgr" install \
-            xetex ctex xecjk zhnumber fontspec fandol \
+          PKGS="xetex ctex xecjk zhnumber fontspec fandol \
             pgfplots pgf tcolorbox environ trimspaces tikzfill pdfcol \
             eso-pic etoolbox booktabs caption footmisc perpage titlesec titletoc tocloft \
             geometry graphics tools amsmath amsfonts amssymb hyperref bookmark \
             enumitem multirow makecell tabularx array calc longtable \
-            xcolor fancyhdr
-          # 宏包装好再整树搬进缓存目录；直接在复制出来的树上跑 tlmgr 容易出岔子
+            xcolor fancyhdr"
+          # 装宏包：跨版本（本地 TL 比 CTAN 常年旧）时 tlmgr 会拒绝，改用与本地同年份的 historic 源再试
+          if ! "$ORIG/tlmgr" install $PKGS > /tmp/tlmgr.log 2>&1; then
+            echo "---- tlmgr 首次失败，摘要 ----"
+            grep -E "not present in repository|cannot be found|older than remote|Cross release|^! " /tmp/tlmgr.log | head -10 || true
+            YEAR=$("$ORIG/tex" --version 2>/dev/null | grep -o '[0-9]\{4\}' | head -1 || true)
+            [ -n "${YEAR:-}" ] || YEAR=$("$ORIG/pdflatex" --version 2>/dev/null | grep -o '[0-9]\{4\}' | head -1 || true)
+            [ -n "${YEAR:-}" ] || YEAR=$(date +%Y)
+            echo "本地 TeX Live 版本：${YEAR}"
+            for repo in \
+              "https://ftp.tu-ryde.de/pub/texlive/historic/systems/texlive/${YEAR}/tlnet" \
+              "https://ftp.math.utah.edu/pub/tex/historic/systems/texlive/${YEAR}/tlnet"; do
+              echo "改试 historic 源：$repo"
+              if "$ORIG/tlmgr" option repository "$repo" \
+                 && "$ORIG/tlmgr" install $PKGS > /tmp/tlmgr2.log 2>&1; then
+                echo "historic 源安装成功。"; break
+              fi
+            done
+            if ! "$ORIG/kpsewhich" ctex.sty >/dev/null 2>&1; then
+              echo "---- tlmgr 日志末尾 ----"; tail -30 /tmp/tlmgr.log || true
+              echo "::error::宏包安装失败，见上面的日志"; exit 1
+            fi
+          fi
+          "$ORIG/kpsewhich" ctex.sty perpage.sty
           mkdir -p "$CI_TEXDIR"
           cp -a "$HOME/.TinyTeX/." "$CI_TEXDIR/"
 
