@@ -1,0 +1,131 @@
+name: 渲染 PDF
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'books/**/*.tex'
+      - 'books/*/build.sh'
+      - 'shared/**'
+      - 'texmf/**'
+      - '.github/workflows/render.yml'
+  pull_request:
+    paths:
+      - 'books/**/*.tex'
+      - 'shared/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: 取仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 装 TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-xetex texlive-lang-chinese texlive-latex-extra \
+            texlive-pictures texlive-fonts-recommended texlive-science \
+            poppler-utils unzip curl
+          xelatex --version | head -1
+
+      - name: 装字体（拉丁 Noto、CJK Noto、等宽）
+        env:
+          MONO_FONT_URL: ${{ vars.MONO_FONT_URL }}
+        run: |
+          set -euo pipefail
+          # 拉丁 Noto（NotoSerif-Regular.ttf 等）与 CJK
+          sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-cjk fonts-noto-cjk-extra
+          # 基座里写死了 Path=/usr/share/fonts/noto/，Ubuntu 装在 truetype/ 下，做个软链
+          if [ ! -d /usr/share/fonts/noto ]; then
+            sudo ln -s /usr/share/fonts/truetype/noto /usr/share/fonts/noto
+          fi
+          ls /usr/share/fonts/noto/NotoSerif-Regular.ttf /usr/share/fonts/noto/NotoSans-Regular.ttf
+
+          # 等宽字体 JetBrains Maple Mono：apt 没有，从发布页取
+          mkdir -p ~/.local/share/fonts
+          URL="${MONO_FONT_URL:-https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest/download/JetBrainsMapleMono-XX-XX-XX-XX.zip}"
+          echo "取等宽字体：$URL"
+          if curl -fL --retry 3 -o /tmp/mono.zip "$URL"; then
+            unzip -o -q /tmp/mono.zip -d ~/.local/share/fonts/
+          else
+            echo "::error::等宽字体下载失败。请在仓库 Variables 里设 MONO_FONT_URL，指向 JetBrains Maple Mono 的发行包。" >&2
+            exit 1
+          fi
+          fc-cache -f >/dev/null
+          fc-match 'JetBrains Maple Mono'
+          fc-match 'Noto Serif CJK SC'
+          fc-match 'Noto Sans Mono CJK SC'
+
+      - name: 字体自检
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in "NotoSerif" "NotoSans" "JetBrains Maple Mono" "Noto Serif CJK SC" "Noto Sans CJK SC" "Noto Sans Mono CJK SC"; do
+            got=$(fc-match -f '%{family[0]}' "$f")
+            printf '%-26s → %s\n' "$f" "$got"
+            case "$got" in
+              *Noto*|*JetBrains*) ;;
+              *) echo "::error::字体缺失：$f"; fail=1 ;;
+            esac
+          done
+          exit "$fail"
+
+      - name: 编译三本书
+        run: |
+          set -euo pipefail
+          for dir in warthunder guanghan mooncity; do
+            echo "==== $dir ===="
+            ( cd "books/$dir" && ./build.sh )
+          done
+
+      - name: 校验日志
+        run: |
+          set -euo pipefail
+          fail=0
+          for dir in warthunder guanghan mooncity; do
+            log="books/$dir/build.log"
+            [ -f "$log" ] || { echo "缺少 $log" >&2; fail=1; continue; }
+            err=$(grep -c '^!' "$log" || true)
+            unres=$(grep -c 'undefined references' "$log" || true)
+            miss=$(grep -c 'Missing character' "$log" || true)
+            echo "$dir：错误 $err，未解析引用 $unres，缺字 $miss"
+            [ "$err" -eq 0 ] || fail=1
+            [ "$unres" -eq 0 ] || fail=1
+            [ "$miss" -eq 0 ] || fail=1
+          done
+          exit "$fail"
+
+      - name: 上传 PDF（审查用）
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfs
+          path: books/*/*.pdf
+          if-no-files-found: error
+
+      - name: 提交新 PDF
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A books/*/*.pdf
+          if git diff --cached --quiet; then
+            echo "PDF 无变化，不提交。"
+            exit 0
+          fi
+          git commit -m "CI：重新渲染 PDF [skip ci]" -m "由 .github/workflows/render.yml 在源码变更后自动生成。"
+          git push origin "HEAD:${{ github.ref_name }}"
