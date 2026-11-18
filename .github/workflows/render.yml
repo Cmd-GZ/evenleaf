@@ -118,14 +118,23 @@ jobs:
 
       - name: 提交新 PDF
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+        env:
+          BUILT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --quiet origin "${GITHUB_REF_NAME}"
+          head=$(git rev-parse "origin/${GITHUB_REF_NAME}")
+          # 构建期间若又有新提交，这一批 PDF 已经过期，不写回，等下一轮
+          if [ "$head" != "$BUILT_SHA" ]; then
+            echo "源码已更新（origin ${head:0:7} ≠ 构建 ${BUILT_SHA:0:7}），本轮 PDF 不写回。"
+            exit 0
+          fi
           git add -A books/*/*.pdf
           if git diff --cached --quiet; then
             echo "PDF 无变化，不提交。"
             exit 0
           fi
           git commit -m "CI：重新渲染 PDF [skip ci]" -m "由 .github/workflows/render.yml 在源码变更后自动生成。"
-          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
