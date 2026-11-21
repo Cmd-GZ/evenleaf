@@ -174,6 +174,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
+          gh --version | head -1
           mkdir -p .release
           SHA=$(git rev-parse --short HEAD)
           pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
@@ -209,8 +210,7 @@ jobs:
             gh release create "$TAG" --title "$TITLE" --target "$GITHUB_SHA" --notes "$NOTES"
           fi
           gh release upload "$TAG" .release/*.pdf --clobber
-          # 让 /releases/latest/download/... 指向这一次
-          gh release edit "$TAG" --latest
+          # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
 
           # 迁移遗留：早先那个滚动标签，清掉一次即可
           if gh release view latest >/dev/null 2>&1; then
