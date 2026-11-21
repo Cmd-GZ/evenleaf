@@ -18,9 +18,9 @@
 
 | 卷次 | 书名 | 著者／辑校 | 译者 | 状态 | 成品 |
 |---|---|---|---|---|---|
-| **第 I 卷** | 月之都——〈广寒宫残简〉辑佚与考释 | ［俄］巴兰尼科夫 辑校 | 李文亚、张建国 | 已成书，79 页（2024 年 9 月） | [PDF](books/guanghan/月之都——广寒宫残简辑佚与考释.pdf) |
-| **第 VII 卷** | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](books/warthunder/战争的雷霆——记一种可能的中国历史.pdf) |
-| **第 XIII 卷**（暂定） | 月之都——记一个不想变化的文明 | ［日］太田顺也 | 孙笑川、李文亚 | 已成书，102 页，十二章（2024 年 12 月） | [PDF](books/mooncity/月之都——记一个不想变化的文明.pdf) |
+| **第 I 卷** | 月之都——〈广寒宫残简〉辑佚与考释 | ［俄］巴兰尼科夫 辑校 | 李文亚、张建国 | 已成书，79 页（2024 年 9 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/guanghan.pdf) |
+| **第 VII 卷** | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/warthunder.pdf) |
+| **第 XIII 卷**（暂定） | 月之都——记一个不想变化的文明 | ［日］太田顺也 | 孙笑川、李文亚 | 已成书，102 页，十二章（2024 年 12 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/mooncity.pdf) |
 
 - 第 I 卷专治静海七号出土三十七片小篆残简的文字转写、校记、语译与考释；
 - 第 VII 卷以通史体例将冷战档案与中原古史并置互校（其中第 3 版仅提交 `6fd71563` 曾流出，第 4 版于书末附勘误汇总）；
@@ -36,7 +36,7 @@
 worldview/     跨书世界观设定与大事记（各卷共用的基础事实与硬规则）
 meta/          丛书书目、版本史、出版版权字段、人物履历与文体规范
 shared/style/  丛书共用 LaTeX 版式与封面基座
-books/         各卷独立目录（源码、局部设定、构建脚本与成品 PDF）
+books/         各卷独立目录（源码、局部设定与构建脚本；PDF 由 CI 发布到 Release）
 docs/          排版陷阱排查与编写手册
 scripts/       环境与辅助脚本
 ```
@@ -52,7 +52,7 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 ./build.sh
 ```
 
-环境依赖 XeLaTeX、`ctex`、Noto Serif/Sans CJK SC 与 JetBrains Maple Mono 字体；验收标准为未解析引用 = 0、缺字 = 0、Overfull = 0。推送 `.tex`、`shared/` 或 `build.sh` 至主分支后，[`.github/workflows/render.yml`](.github/workflows/render.yml) 会自动重新渲染对应 PDF。
+环境依赖 XeLaTeX、`ctex`、Noto Serif/Sans CJK SC 与 JetBrains Maple Mono 字体；验收标准为未解析引用 = 0、缺字 = 0、Overfull = 0。推送 `.tex`、`shared/` 或 `build.sh` 至主分支后，[`.github/workflows/render.yml`](.github/workflows/render.yml) 会自动重编三卷，并把成品作为资产发布到 [Releases](https://github.com/Cmd-GZ/thunder-of-war/releases/latest)。仓库里不存 PDF，上面三个链接永远指向最新一次成功构建。
 
 ---
 
@@ -68,7 +68,7 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 
 ## 许可
 
-本仓库（世界观设定、LaTeX 源码、成品 PDF、图版、文档）以 [**CC BY-NC-SA 4.0**](LICENSE) 发布：署名、非商业性使用、相同方式共享。
+本仓库（世界观设定、LaTeX 源码、图版、文档，以及 Release 上的成品 PDF）以 [**CC BY-NC-SA 4.0**](LICENSE) 发布：署名、非商业性使用、相同方式共享。
 
 ```text
 Copyright (c) 2026 Cmd-GZ <newsupergodg@gmail.com>

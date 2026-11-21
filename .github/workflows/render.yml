@@ -156,24 +156,29 @@ jobs:
             !books/*/main.pdf
           if-no-files-found: error
 
-      - name: 提交新 PDF
+      - name: 发布到 Release
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         env:
-          BUILT_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch --quiet origin "${GITHUB_REF_NAME}"
-          head=$(git rev-parse "origin/${GITHUB_REF_NAME}")
-          if [ "$head" != "$BUILT_SHA" ]; then
-            echo "源码已更新（origin ${head:0:7} ≠ 构建 ${BUILT_SHA:0:7}），本轮 PDF 不写回。"
-            exit 0
+          mkdir -p .release
+          cp "books/warthunder/战争的雷霆——记一种可能的中国历史.pdf" .release/warthunder.pdf
+          cp "books/guanghan/月之都——广寒宫残简辑佚与考释.pdf"     .release/guanghan.pdf
+          cp "books/mooncity/月之都——记一个不想变化的文明.pdf"     .release/mooncity.pdf
+
+          pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
+          NOTES=$(printf '源码 %s 自动编译。\n\n| 卷 | 页数 |\n|---|---|\n| 战争的雷霆 | %s |\n| 广寒宫残简 | %s |\n| 月之都 | %s |' \
+            "$(git rev-parse --short HEAD)" \
+            "$(pages .release/warthunder.pdf)" \
+            "$(pages .release/guanghan.pdf)" \
+            "$(pages .release/mooncity.pdf)")
+
+          if gh release view latest >/dev/null 2>&1; then
+            gh release edit latest --notes "$NOTES"
+          else
+            gh release create latest --title "最新构建" --target "$GITHUB_SHA" --notes "$NOTES" --latest
           fi
-          git add -A -- 'books/*/*.pdf' ':(exclude)books/*/main.pdf'
-          if git diff --cached --quiet; then
-            echo "PDF 无变化，不提交。"
-            exit 0
-          fi
-          git commit -m "CI：重新渲染 PDF [skip ci]" -m "由 .github/workflows/render.yml 在源码变更后自动生成。"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          gh release upload latest .release/*.pdf --clobber
+          gh release edit latest --latest
+          gh release view latest --json url --jq .url
