@@ -178,7 +178,7 @@ jobs:
           SHA=$(git rev-parse --short HEAD)
           pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
 
-          # 每卷取 build.sh 产出的分发 PDF（排除工作副本 main.pdf），以目录名作资产名
+          # 每卷取 build.sh 产出的分发 PDF（排除工作副本 main.pdf），资产沿用书籍自身的文件名
           rows=""
           for d in books/*/; do
             [ -f "$d/build.sh" ] || continue
@@ -191,8 +191,8 @@ jobs:
             if [ -z "$dist" ]; then
               echo "::error::$name 没有产出分发 PDF"; exit 1
             fi
-            cp "$dist" ".release/$name.pdf"
-            rows="$rows| $name | $(pages "$dist") |\n"
+            cp "$dist" ".release/"
+            rows="$rows| $(basename "$dist") | $(pages "$dist") |\n"
           done
 
           NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' \\
@@ -215,7 +215,7 @@ jobs:
           # 迁移遗留：早先那个滚动标签，清掉一次即可
           if gh release view latest >/dev/null 2>&1; then
             echo "清理遗留的滚动 release：latest"
-            gh release delete latest --yes --cleanup-tag
+            gh release delete latest --yes --cleanup-tag || echo "（清理失败，忽略）"
           fi
 
           gh release view "$TAG" --json tagName,url --jq '.tagName + "  " + .url'
