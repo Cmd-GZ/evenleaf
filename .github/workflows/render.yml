@@ -211,7 +211,7 @@ jobs:
             if [ -z "$dist" ]; then
               echo "::error::$name 没有产出分发 PDF"; exit 1
             fi
-            cp "$dist" ".release/"
+            cp "$dist" ".release/$name.pdf"
             rows="$rows| $(basename "$dist") | $(pages "$dist") |\n"
           done
 
@@ -240,29 +240,32 @@ jobs:
           for aid in $(gh api "repos/$GITHUB_REPOSITORY/releases/$REL_ID/assets" --paginate --jq '.[].id'); do
             gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$aid" >/dev/null || true
           done
-          n=0
-          for f in .release/*.pdf; do
-            n=$((n+1))
-            base=$(basename "$f")
-            # 先以 ASCII 名上传（GitHub 会忽略 URL 里的非 ASCII name，落成 default.pdf），
-            # 再 PATCH 改名成书名。
-            tmp="upload-${n}.pdf"
+          # GitHub 的资产名只接受 ASCII：非 ASCII 名会被落成 default.pdf（PATCH 也一样，
+          # 改名后 name 仍是 default.pdf，第二次再改就 422 already_exists）。
+          # 因此资产用目录名，中文书名放进发布说明与资产 label。
+          for d in books/*/; do
+            [ -f "$d/build.sh" ] || continue
+            dir=$(basename "$d")
+            src=""
+            for f in "$d"*.pdf; do
+              case "$f" in */main.pdf) continue;; esac
+              src="$f"
+            done
+            [ -n "$src" ] || { echo "::error::$dir 无分发 PDF"; exit 1; }
             code=$(curl -sS --retry 3 --retry-delay 3 -o /tmp/up.json -w '%{http_code}' -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/pdf" \
-              --data-binary @"$f" "$API?name=$tmp")
+              --data-binary @"$src" "$API?name=$dir.pdf")
             if [ "$code" != "201" ]; then
-              echo "::error::上传 $base 失败（HTTP $code）"; head -c 300 /tmp/up.json; echo; exit 1
+              echo "::error::上传 $dir.pdf 失败（HTTP $code）"; head -c 300 /tmp/up.json; echo; exit 1
             fi
             aid=$(gh api "repos/$GITHUB_REPOSITORY/releases/$REL_ID/assets" --paginate \
-                    --jq "first(.[] | select(.name==\"$tmp\") | .id) // empty")
-            if [ -z "$aid" ]; then
-              echo "::error::上传后找不到资产 $tmp"; exit 1
-            fi
-            newname=$(gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$aid" \
-                        -f name="$base" --jq .name)
-            echo "已上传 $newname"
+                    --jq "first(.[] | select(.name==\"$dir.pdf\") | .id) // empty")
+            # label 里写中文书名；失败不影响下载
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$aid" \
+              -f label="$(basename "$src" .pdf)" >/dev/null 2>&1 || true
+            echo "已上传 $dir.pdf"
           done
 
           # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
