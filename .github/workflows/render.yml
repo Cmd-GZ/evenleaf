@@ -217,7 +217,21 @@ jobs:
               exit 1
             fi
           fi
-          gh release upload "$TAG" .release/*.pdf --clobber
+          # gh release upload 对非 ASCII 文件名会 404（uploads 接口对 name 的编码处理不同），
+          # 改用 REST 接口逐个上传：名字由 python 做百分号编码。
+          REL_ID=$(gh release view "$TAG" --json databaseId --jq .databaseId)
+          for f in .release/*.pdf; do
+            base=$(basename "$f")
+            enc=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe=""))' "$base")
+            # 同名资产先删（同一提交重跑时）
+            gh api "repos/$GITHUB_REPOSITORY/releases/$REL_ID/assets" --paginate \
+              --jq ".[] | select(.name==\"$base\") | .id" 2>/dev/null | while read -r aid; do
+                [ -n "$aid" ] && gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$aid"
+              done
+            gh api -X POST "repos/$GITHUB_REPOSITORY/releases/$REL_ID/assets?name=$enc" \
+              -H "Content-Type: application/pdf" --input "$f" >/dev/null
+            echo "已上传 $base"
+          done
           # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
 
           # 迁移遗留：早先那个滚动标签，清掉一次即可
