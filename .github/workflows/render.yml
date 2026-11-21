@@ -34,14 +34,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 取缓存（TeX 与字体）
-        id: cache
+      - name: 取缓存（TeX）
+        id: cache_tex
         uses: actions/cache@v4
         with:
-          path: |
-            .ci/texlive
-            .ci/fonts
-          key: tex-${{ runner.os }}-${{ hashFiles('.github/workflows/render.yml') }}
+          path: .ci/texlive
+          key: texlive-${{ runner.os }}-v1
+
+      - name: 取缓存（字体）
+        id: cache_fonts
+        uses: actions/cache@v4
+        with:
+          path: .ci/fonts
+          key: fonts-${{ runner.os }}-v1
 
       - name: 装系统小工具（每次都装，很快）
         run: |
@@ -49,7 +54,7 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends poppler-utils
 
       - name: 装 TinyTeX（只在缓存未命中时）
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache_tex.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           mkdir -p .ci
@@ -76,7 +81,7 @@ jobs:
           cp -a "$HOME/.TinyTeX/." "$CI_TEXDIR/"
 
       - name: 装字体（只在缓存未命中时）
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache_fonts.outputs.cache-hit != 'true'
         env:
           MONO_FONT_URL: ${{ vars.MONO_FONT_URL }}
         run: |
@@ -88,7 +93,7 @@ jobs:
           cp -a /usr/share/fonts/truetype/noto/. .ci/fonts/noto/
           cp -a /usr/share/fonts/opentype/noto/. .ci/fonts/noto/
           URL="${MONO_FONT_URL:-https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest/download/JetBrainsMapleMono-XX-XX-XX-XX.zip}"
-          curl -fL --retry 3 -o /tmp/mono.zip "$URL"
+          curl -fL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 20 -o /tmp/mono.zip "$URL"
           unzip -o -q /tmp/mono.zip -d .ci/fonts/mono/
 
       - name: 挂上 TeX 与字体
