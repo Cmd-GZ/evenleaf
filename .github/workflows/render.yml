@@ -195,15 +195,27 @@ jobs:
             rows="$rows| $name | $(pages "$dist") |\n"
           done
 
-          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' \
+          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' \\
             "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
 
-          # 始终复用同一个 tag：URL 恒定，标题与说明随构建更新
-          if gh release view latest >/dev/null 2>&1; then
-            gh release edit latest --title "最新构建 · $SHA" --notes "$NOTES"
+          # 每次构建一个独立 release：标签带日期与提交号，历史随时可取
+          DATE=$(date -u '+%Y-%m-%d')
+          TAG="build-${DATE}-${SHA}"
+          TITLE="构建 ${DATE} · ${SHA}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
           else
-            gh release create latest --title "最新构建 · $SHA" --target "$GITHUB_SHA" --notes "$NOTES" --latest
+            gh release create "$TAG" --title "$TITLE" --target "$GITHUB_SHA" --notes "$NOTES"
           fi
-          gh release upload latest .release/*.pdf --clobber
-          gh release edit latest --latest
-          gh release view latest --json url,tagName --jq '.tagName + "  " + .url'
+          gh release upload "$TAG" .release/*.pdf --clobber
+          # 让 /releases/latest/download/... 指向这一次
+          gh release edit "$TAG" --latest
+
+          # 迁移遗留：早先那个滚动标签，清掉一次即可
+          if gh release view latest >/dev/null 2>&1; then
+            echo "清理遗留的滚动 release：latest"
+            gh release delete latest --yes --cleanup-tag
+          fi
+
+          gh release view "$TAG" --json tagName,url --jq '.tagName + "  " + .url'
