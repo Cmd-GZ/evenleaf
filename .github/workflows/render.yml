@@ -196,8 +196,7 @@ jobs:
             rows="$rows| $(basename "$dist") | $(pages "$dist") |\n"
           done
 
-          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' \\
-            "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
+          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
 
           # 每次构建一个独立 release：标签带日期与提交号，历史随时可取
           DATE=$(date -u '+%Y-%m-%d')
