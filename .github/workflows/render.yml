@@ -110,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="$CI_TEXDIR/bin/x86_64-linux:$PATH"
-          xelatex --version | head -1
+          xelatex --version 2>&1 | sed -n 1p || true
           fail=0
           for f in "NotoSerif" "NotoSans" "JetBrains Maple Mono" "Noto Serif CJK SC" "Noto Sans CJK SC" "Noto Sans Mono CJK SC"; do
             got=$(fc-match -f '%{family[0]}' "$f")
@@ -174,7 +174,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          gh --version | head -1
+          gh --version 2>&1 | sed -n 1p || true
           mkdir -p .release
           SHA=$(git rev-parse --short HEAD)
           pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
@@ -207,7 +207,11 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
           else
-            gh release create "$TAG" --title "$TITLE" --target "$GITHUB_SHA" --notes "$NOTES"
+            if ! out=$(gh release create "$TAG" --title "$TITLE" --notes "$NOTES" 2>&1); then
+              echo "::error::gh release create 失败"
+              printf '%s\n' "$out" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
           fi
           gh release upload "$TAG" .release/*.pdf --clobber
           # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
