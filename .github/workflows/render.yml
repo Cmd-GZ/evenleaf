@@ -172,7 +172,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           shopt -s nullglob
           gh --version 2>&1 | sed -n 1p || true
           mkdir -p .release
@@ -207,7 +207,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
           else
-            if ! out=$(gh release create "$TAG" --title "$TITLE" --notes "$NOTES" 2>&1); then
+            if ! out=$(gh release create "$TAG" --title "$TITLE" --target "$GITHUB_SHA" --latest --notes "$NOTES" 2>&1); then
               echo "::error::gh release create 失败"
               printf '%s\n' "$out" | tee -a "$GITHUB_STEP_SUMMARY"
               exit 1
