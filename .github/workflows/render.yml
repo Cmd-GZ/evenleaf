@@ -194,11 +194,10 @@ jobs:
           set -euxo pipefail
           shopt -s nullglob
           gh --version 2>&1 | sed -n 1p || true
-          mkdir -p .release
           SHA=$(git rev-parse --short HEAD)
           pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
 
-          # 每卷取 build.sh 产出的分发 PDF（排除工作副本 main.pdf），资产沿用书籍自身的文件名
+          # 每卷取 build.sh 产出的分发 PDF（排除工作副本 main.pdf），汇总页数供发布说明使用
           rows=""
           for d in books/*/; do
             [ -f "$d/build.sh" ] || continue
@@ -211,7 +210,6 @@ jobs:
             if [ -z "$dist" ]; then
               echo "::error::$name 没有产出分发 PDF"; exit 1
             fi
-            cp "$dist" ".release/$name.pdf"
             rows="$rows| $(basename "$dist") | $(pages "$dist") |\n"
           done
 
@@ -232,7 +230,7 @@ jobs:
             fi
           fi
           # gh release upload 对非 ASCII 文件名会 404；改用 uploads 接口直接 POST，
-          # 文件名由 python 做百分号编码，失败时打印返回体。
+          # 资产名先取 ASCII 的 $dir.pdf，非 201 时打印返回体。
           REL_ID=$(gh release view "$TAG" --json databaseId --jq .databaseId)
           API="https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$REL_ID/assets"
 
@@ -268,12 +266,5 @@ jobs:
             echo "已上传 $dir.pdf"
           done
 
-          # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
-
-          # 迁移遗留：早先那个滚动标签，清掉一次即可
-          if gh release view latest >/dev/null 2>&1; then
-            echo "清理遗留的滚动 release：latest"
-            gh release delete latest --yes --cleanup-tag || echo "（清理失败，忽略）"
-          fi
 
           gh release view "$TAG" --json tagName,url --jq '.tagName + "  " + .url'

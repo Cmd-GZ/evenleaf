@@ -38,7 +38,7 @@ meta/          丛书书目、版本史、出版版权字段、人物履历与�
 shared/style/  丛书共用 LaTeX 版式与封面基座
 books/         各卷独立目录（源码、局部设定与构建脚本；PDF 由 CI 发布到 Release）
 docs/          排版陷阱排查与编写手册
-scripts/       环境与辅助脚本
+scripts/       TeX 环境安装与成品 PDF 取回脚本
 ```
 
 ---
@@ -53,6 +53,16 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 ```
 
 环境依赖 XeLaTeX、`ctex`、Noto Serif/Sans CJK SC 与 JetBrains Maple Mono 字体；验收标准为未解析引用 = 0、缺字 = 0、Overfull = 0。推送 `.tex`、`shared/` 或 `build.sh` 至主分支后，[`.github/workflows/render.yml`](.github/workflows/render.yml) 会自动重编三卷，并把成品作为资产发布到 [Releases](https://github.com/Cmd-GZ/thunder-of-war/releases/latest)。仓库里不存 PDF，上面三个链接永远指向最新一次成功构建。
+
+不想自己编译时，可用 [`scripts/fetch-pdfs.sh`](scripts/fetch-pdfs.sh) 把 CI 编好的成品取回本地：脚本先核对 Release 标签里的提交号与本地「最近一次改动构建输入」的提交是否一致，一致才下载到各卷目录下的分发文件名。
+
+```bash
+./scripts/fetch-pdfs.sh --check    # 只看状态：版本是否对齐、CI 跑到哪一步
+./scripts/fetch-pdfs.sh            # 版本对齐则下载
+./scripts/fetch-pdfs.sh --wait 300 # 有构建在排队或运行就先等，最多 300 秒
+```
+
+`--force` 跳过版本核对直接下载最新；「构建输入」的判定范围与 `render.yml` 的触发路径一致，改 `PLAN.md`、`SETTING.md` 等文档不计入。
 
 ---
 

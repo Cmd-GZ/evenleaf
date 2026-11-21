@@ -9,8 +9,8 @@
 #
 # 判定方式（两条并用）：
 #   1. 版本闸：Release 的标签形如 build-YYYY-MM-DD-<sha>；把 <sha> 与本地
-#      「最近一次动过构建输入」的提交（books/ shared/ texmf/ 与工作流）比对，
-#      不一致说明远端还没编到这一版，不下。
+#      「最近一次动过构建输入」的提交（books/**/*.tex、books/*/build.sh、
+#      shared/、texmf/ 与 render.yml 自身）比对，不一致说明远端还没编到这一版，不下。
 #   2. 状态提示：查该提交对应的 Actions 运行，报告 queued / in_progress /
 #      success / failure，便于判断是「还没轮到」还是「编挂了」。
 #      状态只作提示，不单独作为下载依据——运行成功也可能对应旧提交。
@@ -53,7 +53,12 @@ api() {
 }
 
 # ---- 本地应当对应的提交 ----------------------------------------------------
-want_full=$(git log -1 --format=%H -- books shared texmf .github/workflows 2>/dev/null || true)
+# 路径范围必须与 .github/workflows/render.yml 的 paths 逐条一致；否则改
+# PLAN.md、SETTING.md 或其它工作流也会被算作构建输入，误判成「本地已领先远端」。
+# 默认 pathspec 里 books/**/*.tex 已覆盖 books/<卷>/ch1.tex 这类直接位于卷目录下的文件。
+want_full=$(git log -1 --format=%H -- \
+  'books/**/*.tex' 'books/*/build.sh' 'shared' 'texmf' '.github/workflows/render.yml' \
+  2>/dev/null || true)
 want=${want_full:0:7}
 [ -n "$want" ] || { echo "错误：取不到 books/ 的最近提交，确认在仓库根目录运行。" >&2; exit 1; }
 

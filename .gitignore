@@ -8,6 +8,7 @@
 # 所有 PDF 均为构建产物，不入库：分发副本由 CI 发布到 GitHub Release
 main.pdf
 books/*/*.pdf
+/books/*/.tmp_*/
 *.aux
 *.log
 *.out
