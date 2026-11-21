@@ -243,16 +243,20 @@ jobs:
           for f in .release/*.pdf; do
             base=$(basename "$f")
             enc=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe=""))' "$base")
-            code=$(curl -sS --retry 3 --retry-all-errors -o /tmp/up.json -w '%{http_code}' -X POST \
+            code=$(curl -sS --retry 3 --retry-delay 3 -o /tmp/up.json -w '%{http_code}' -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/pdf" \
               --data-binary @"$f" "$API?name=$enc")
-            if [ "$code" != "201" ]; then
+            if [ "$code" = "201" ]; then
+              echo "已上传 $base"
+            elif [ "$code" = "422" ] && grep -q already_exists /tmp/up.json; then
+              # curl 重试时第一个请求其实已经成功，第二次自然重名；资产在即为成功
+              echo "资产已存在，跳过：$base"
+            else
               echo "::error::上传 $(basename "$f") 失败（HTTP $code）"
               head -c 400 /tmp/up.json; echo; exit 1
             fi
-            echo "已上传 $base"
           done
           # 新建的 release 天然成为 latest，不依赖 gh 的 --latest 开关（旧版本 gh 无此参数）
 
