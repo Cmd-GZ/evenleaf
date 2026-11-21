@@ -121,30 +121,41 @@ jobs:
           kpsewhich ctex.sty >/dev/null || { echo "::error::ctex.sty 缺失"; fail=1; }
           exit "$fail"
 
-      - name: 编译三本书
+      - name: 编译各卷
         run: |
           set -euo pipefail
           export PATH="$CI_TEXDIR/bin/x86_64-linux:$PATH"
-          for dir in warthunder guanghan mooncity; do
-            echo "==== $dir ===="
-            ( cd "books/$dir" && ./build.sh )
+          shopt -s nullglob
+          built=0
+          for d in books/*/; do
+            [ -f "$d/build.sh" ] || continue
+            name=$(basename "$d")
+            echo "==== $name ===="
+            ( cd "$d" && ./build.sh )
+            built=$((built+1))
           done
+          if [ "$built" -eq 0 ]; then
+            echo "::error::books/ 下没有找到任何含 build.sh 的书目"; exit 1
+          fi
+          echo "共编译 $built 卷"
 
       - name: 校验日志
         run: |
           set -euo pipefail
-          fail=0
-          for dir in warthunder guanghan mooncity; do
-            log="books/$dir/build.log"
-            [ -f "$log" ] || { echo "缺少 $log" >&2; fail=1; continue; }
+          shopt -s nullglob
+          fail=0; n=0
+          for d in books/*/; do
+            [ -f "$d/build.log" ] || continue
+            n=$((n+1)); name=$(basename "$d"); log="$d/build.log"
             err=$(grep -c '^!' "$log" || true)
             unres=$(grep -c 'undefined references' "$log" || true)
             miss=$(grep -c 'Missing character' "$log" || true)
-            echo "$dir：错误 $err，未解析引用 $unres，缺字 $miss"
+            echo "$name：错误 $err，未解析引用 $unres，缺字 $miss"
             [ "$err" -eq 0 ] || fail=1
             [ "$unres" -eq 0 ] || fail=1
             [ "$miss" -eq 0 ] || fail=1
           done
+          [ "$n" -gt 0 ] || { echo "::error::没有找到 build.log"; exit 1; }
           exit "$fail"
 
       - name: 上传 PDF
@@ -162,23 +173,37 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          shopt -s nullglob
           mkdir -p .release
-          cp "books/warthunder/战争的雷霆——记一种可能的中国历史.pdf" .release/warthunder.pdf
-          cp "books/guanghan/月之都——广寒宫残简辑佚与考释.pdf"     .release/guanghan.pdf
-          cp "books/mooncity/月之都——记一个不想变化的文明.pdf"     .release/mooncity.pdf
-
+          SHA=$(git rev-parse --short HEAD)
           pages() { pdfinfo "$1" | awk '/^Pages/{print $2}'; }
-          NOTES=$(printf '源码 %s 自动编译。\n\n| 卷 | 页数 |\n|---|---|\n| 战争的雷霆 | %s |\n| 广寒宫残简 | %s |\n| 月之都 | %s |' \
-            "$(git rev-parse --short HEAD)" \
-            "$(pages .release/warthunder.pdf)" \
-            "$(pages .release/guanghan.pdf)" \
-            "$(pages .release/mooncity.pdf)")
 
+          # 每卷取 build.sh 产出的分发 PDF（排除工作副本 main.pdf），以目录名作资产名
+          rows=""
+          for d in books/*/; do
+            [ -f "$d/build.sh" ] || continue
+            name=$(basename "$d")
+            dist=""
+            for f in "$d"*.pdf; do
+              case "$f" in */main.pdf) continue;; esac
+              dist="$f"
+            done
+            if [ -z "$dist" ]; then
+              echo "::error::$name 没有产出分发 PDF"; exit 1
+            fi
+            cp "$dist" ".release/$name.pdf"
+            rows="$rows| $name | $(pages "$dist") |\n"
+          done
+
+          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' \
+            "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
+
+          # 始终复用同一个 tag：URL 恒定，标题与说明随构建更新
           if gh release view latest >/dev/null 2>&1; then
-            gh release edit latest --notes "$NOTES"
+            gh release edit latest --title "最新构建 · $SHA" --notes "$NOTES"
           else
-            gh release create latest --title "最新构建" --target "$GITHUB_SHA" --notes "$NOTES" --latest
+            gh release create latest --title "最新构建 · $SHA" --target "$GITHUB_SHA" --notes "$NOTES" --latest
           fi
           gh release upload latest .release/*.pdf --clobber
           gh release edit latest --latest
-          gh release view latest --json url --jq .url
+          gh release view latest --json url,tagName --jq '.tagName + "  " + .url'
