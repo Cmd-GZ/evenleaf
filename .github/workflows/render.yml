@@ -36,14 +36,14 @@ jobs:
 
       - name: 取缓存（TeX）
         id: cache_tex
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ci/texlive
           key: texlive-${{ runner.os }}-v1
 
       - name: 取缓存（字体）
         id: cache_fonts
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .ci/fonts
           key: fonts-${{ runner.os }}-v1
@@ -95,6 +95,20 @@ jobs:
           URL="${MONO_FONT_URL:-https://github.com/SpaceTimee/Fusion-JetBrainsMapleMono/releases/latest/download/JetBrainsMapleMono-XX-XX-XX-XX.zip}"
           curl -fL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 20 -o /tmp/mono.zip "$URL"
           unzip -o -q /tmp/mono.zip -d .ci/fonts/mono/
+
+      - name: 存缓存（TeX）
+        if: always() && steps.cache_tex.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .ci/texlive
+          key: texlive-${{ runner.os }}-v1
+
+      - name: 存缓存（字体）
+        if: always() && steps.cache_fonts.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .ci/fonts
+          key: fonts-${{ runner.os }}-v1
 
       - name: 挂上 TeX 与字体
         run: |
@@ -197,11 +211,11 @@ jobs:
             if [ -z "$dist" ]; then
               echo "::error::$name 没有产出分发 PDF"; exit 1
             fi
-            cp "$dist" ".release/"
-            rows="$rows| $(basename "$dist") | $(pages "$dist") |\n"
+            cp "$dist" ".release/$name.pdf"
+            rows="$rows| $(basename "$dist") | $name.pdf | $(pages "$dist") |\n"
           done
 
-          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 资产 | 页数 |\n|---|---|\n%b' "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
+          NOTES=$(printf '源码 `%s`（%s）自动编译。\n\n| 卷 | 页数 | 资产名 |\n|---|---|---|\n%b' "$SHA" "$(date -u '+%Y-%m-%d %H:%M UTC')" "$rows")
 
           # 每次构建一个独立 release：标签带日期与提交号，历史随时可取
           DATE=$(date -u '+%Y-%m-%d')
