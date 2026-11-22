@@ -19,7 +19,7 @@
 | 卷次 | 书名 | 著者／辑校 | 译者 | 状态 | 成品 |
 |---|---|---|---|---|---|
 | **第 I 卷** | 月之都——〈广寒宫残简〉辑佚与考释 | ［俄］巴兰尼科夫 辑校 | 李文亚、张建国 | 已成书，79 页（2024 年 9 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/guanghan.pdf) |
-| **第 VII 卷** | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/warthunder.pdf) |
+| **第 VII 卷** (待重写) | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/warthunder.pdf) |
 | **第 XIII 卷**（暂定） | 月之都——记一个不想变化的文明 | ［日］太田顺也 | 孙笑川、李文亚 | 已成书，103 页，十二章（2024 年 12 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/mooncity.pdf) |
 
 - 第 I 卷专治静海七号出土三十七片小篆残简的文字转写、校记、语译与考释；
