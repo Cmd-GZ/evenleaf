@@ -40,7 +40,7 @@ url=$(git config --get remote.origin.url 2>/dev/null || true)
 case "$url" in
   git@github.com:*)        REPO=${url#git@github.com:} ;;
   https://github.com/*)    REPO=${url#https://github.com/} ;;
-  *) REPO="${REPO:-Cmd-GZ/thunder-of-war}" ;;
+  *) REPO="${REPO:-Cmd-GZ/evenleaf}" ;;
 esac
 REPO=${REPO%.git}
 

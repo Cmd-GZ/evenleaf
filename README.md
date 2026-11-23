@@ -18,9 +18,9 @@
 
 | 卷次 | 书名 | 著者／辑校 | 译者 | 状态 | 成品 |
 |---|---|---|---|---|---|
-| **第 I 卷** | 月之都——〈广寒宫残简〉辑佚与考释 | ［俄］巴兰尼科夫 辑校 | 李文亚、张建国 | 已成书，79 页（2024 年 9 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/guanghan.pdf) |
-| **第 VII 卷** (待重写) | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/warthunder.pdf) |
-| **第 XIII 卷**（暂定） | 月之都——记一个不想变化的文明 | ［日］太田顺也 | 孙笑川、李文亚 | 已成书，104 页，十二章（2024 年 12 月） | [PDF](https://github.com/Cmd-GZ/thunder-of-war/releases/latest/download/mooncity.pdf) |
+| **第 I 卷** | 月之都——〈广寒宫残简〉辑佚与考释 | ［俄］巴兰尼科夫 辑校 | 李文亚、张建国 | 已成书，79 页（2024 年 9 月） | [PDF](https://github.com/Cmd-GZ/evenleaf/releases/latest/download/guanghan.pdf) |
+| **第 VII 卷** (待重写) | 战争的雷霆——记一种可能的中国历史 | ［俄］巴兰尼科夫 | 李文亚、张建国 | 已成书，68 页（2024 年 3 月第 4 版） | [PDF](https://github.com/Cmd-GZ/evenleaf/releases/latest/download/warthunder.pdf) |
+| **第 XIII 卷**（暂定） | 月之都——记一个不想变化的文明 | ［日］太田顺也 | 孙笑川、李文亚 | 已成书，104 页，十二章（2024 年 12 月） | [PDF](https://github.com/Cmd-GZ/evenleaf/releases/latest/download/mooncity.pdf) |
 
 - 第 I 卷专治静海七号出土三十七片小篆残简的文字转写、校记、语译与考释；
 - 第 VII 卷以通史体例将冷战档案与中原古史并置互校（其中第 3 版仅提交 `6fd71563` 曾流出，第 4 版于书末附勘误汇总）；
@@ -52,7 +52,7 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 ./build.sh
 ```
 
-环境依赖 XeLaTeX、`ctex`、Noto Serif/Sans CJK SC 与 JetBrains Maple Mono 字体；验收标准为未解析引用 = 0、缺字 = 0、Overfull = 0。推送 `.tex`、`shared/` 或 `build.sh` 至主分支后，[`.github/workflows/render.yml`](.github/workflows/render.yml) 会自动重编三卷，并把成品作为资产发布到 [Releases](https://github.com/Cmd-GZ/thunder-of-war/releases/latest)。仓库里不存 PDF，上面三个链接永远指向最新一次成功构建。
+环境依赖 XeLaTeX、`ctex`、Noto Serif/Sans CJK SC 与 JetBrains Maple Mono 字体；验收标准为未解析引用 = 0、缺字 = 0、Overfull = 0。推送 `.tex`、`shared/` 或 `build.sh` 至主分支后，[`.github/workflows/render.yml`](.github/workflows/render.yml) 会自动重编三卷，并把成品作为资产发布到 [Releases](https://github.com/Cmd-GZ/evenleaf/releases/latest)。仓库里不存 PDF，上面三个链接永远指向最新一次成功构建。
 
 不想自己编译时，可用 [`scripts/fetch-pdfs.sh`](scripts/fetch-pdfs.sh) 把 CI 编好的成品取回本地：脚本先核对 Release 标签里的提交号与本地「最近一次改动构建输入」的提交是否一致，一致才下载到各卷目录下的分发文件名。
 
