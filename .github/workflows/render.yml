@@ -169,10 +169,12 @@ jobs:
             err=$(grep -c '^!' "$log" || true)
             unres=$(grep -c 'undefined references' "$log" || true)
             miss=$(grep -c 'Missing character' "$log" || true)
-            echo "$name：错误 $err，未解析引用 $unres，缺字 $miss"
+            over=$(grep -c '^Overfull' "$log" || true)
+            echo "$name：错误 $err，未解析引用 $unres，缺字 $miss，Overfull $over"
             [ "$err" -eq 0 ] || fail=1
             [ "$unres" -eq 0 ] || fail=1
             [ "$miss" -eq 0 ] || fail=1
+            [ "$over" -eq 0 ] || fail=1
           done
           [ "$n" -gt 0 ] || { echo "::error::没有找到 build.log"; exit 1; }
           exit "$fail"
