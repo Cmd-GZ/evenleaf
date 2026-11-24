@@ -81,7 +81,7 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 本仓库（世界观设定、LaTeX 源码、图版、文档，以及 Release 上的成品 PDF）以 [**CC BY-NC-SA 4.0**](LICENSE) 发布：署名、非商业性使用、相同方式共享。
 
 ```text
-Copyright (c) 2026 Cmd-GZ <newsupergodg@gmail.com>
+Copyright (c) 2026 Contributors to the evenleaf Repository
 ```
 
 书中所引古籍原文属公有领域；现代点校本的整理成果受点校者著作权保护，只引用短句。排版所用 Noto 字体依 OFL 分发，可免费使用，但字体文件不入库。
