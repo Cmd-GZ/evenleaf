@@ -38,7 +38,7 @@ meta/          丛书书目、版本史、出版版权字段、人物履历与�
 shared/style/  丛书共用 LaTeX 版式与封面基座
 books/         各卷独立目录（源码、局部设定与构建脚本；PDF 由 CI 发布到 Release）
 docs/          排版陷阱排查与编写手册
-scripts/       TeX 环境安装与成品 PDF 取回脚本
+scripts/       TeX 环境安装、索引页码校验与成品 PDF 取回脚本
 ```
 
 ---
@@ -70,8 +70,8 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 
 修改正文、增补设定或调整版式前，请先查阅：
 
-- [`worldview/月之都.md`](worldview/月之都.md) —— 核心世界观与大事记；
-- [`meta/当前状态.md`](meta/当前状态.md) —— 各卷现行版本、三层叙事分工与文体禁令；
+- [`worldview/月之都.md`](worldview/月之都.md)、[`worldview/生态重启.md`](worldview/生态重启.md)、[`worldview/记忆消除场.md`](worldview/记忆消除场.md) —— 已定稿核心世界观与大事记（延伸推敲草稿见 [`worldview/drafts/`](worldview/drafts/)）；
+- [`meta/当前状态.md`](meta/当前状态.md)、[`meta/出版信息.md`](meta/出版信息.md)、[`meta/丛书书目.md`](meta/丛书书目.md) —— 各卷现行版本、出版字段、书目关系、三层叙事分工与文体禁令；
 - [`AGENTS.md`](AGENTS.md) 与 [`docs/排版与写作手册.md`](docs/排版与写作手册.md) —— 撰写规范与排版细则。
 
 ---
