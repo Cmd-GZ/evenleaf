@@ -70,7 +70,7 @@ cd books/mooncity   # 或 books/guanghan、books/warthunder
 
 修改正文、增补设定或调整版式前，请先查阅：
 
-- [`worldview/月之都.md`](worldview/月之都.md)、[`worldview/生态重启.md`](worldview/生态重启.md)、[`worldview/记忆消除场.md`](worldview/记忆消除场.md) —— 已定稿核心世界观与大事记（延伸推敲草稿见 [`worldview/drafts/`](worldview/drafts/)）；
+- [`worldview/月之都/`](worldview/月之都/总览与基础设定.md)、[`worldview/生态重启.md`](worldview/生态重启.md)、[`worldview/记忆消除场.md`](worldview/记忆消除场.md) —— 已定稿核心世界观与大事记（延伸推敲草稿见 [`worldview/drafts/`](worldview/drafts/)）；
 - [`meta/当前状态.md`](meta/当前状态.md)、[`meta/出版信息.md`](meta/出版信息.md)、[`meta/丛书书目.md`](meta/丛书书目.md) —— 各卷现行版本、出版字段、书目关系、三层叙事分工与文体禁令；
 - [`AGENTS.md`](AGENTS.md) 与 [`docs/排版与写作手册.md`](docs/排版与写作手册.md) —— 撰写规范与排版细则。
 

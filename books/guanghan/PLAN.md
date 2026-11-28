@@ -6,7 +6,7 @@
 
 > 丛书第 I 卷。巴兰尼科夫 **辑校**。
 > 状态：**即出**（未开工）。
-> 世界观依据：[`../../worldview/月之都.md`](../../worldview/月之都.md)、[`../../worldview/生态重启.md`](../../worldview/生态重启.md)、[`../../worldview/记忆消除场.md`](../../worldview/记忆消除场.md)
+> 世界观依据：[`../../worldview/月之都/`](../../worldview/月之都/总览与基础设定.md)、[`../../worldview/生态重启.md`](../../worldview/生态重启.md)、[`../../worldview/记忆消除场.md`](../../worldview/记忆消除场.md)
 
 ---
 
